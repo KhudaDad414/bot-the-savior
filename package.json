@@ -1,29 +1,18 @@
 {
-  "name": "glee-hello-world",
-  "version": "0.1.0",
-  "description": "Hello world app to improve Glee onboarding ",
-  "type": "module",
-  "engines": {
-    "node": ">=14.15.1"
-  },
+  "name": "bot-the-savior",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/app.js",
   "scripts": {
-    "dev": "glee dev",
-    "start": "glee start"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/app.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/asyncapi/glee-hello-world.git"
-  },
-  "keywords": [
-    "glee"
-  ],
-  "author": "Fran Mendez",
-  "license": "Apache-2.0",
-  "bugs": {
-    "url": "https://github.com/asyncapi/glee-hello-world/issues"
-  },
-  "homepage": "https://github.com/asyncapi/glee-hello-world#readme",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
-    "@asyncapi/glee": "^0.3.0"
+    "@slack/events-api": "^3.0.1",
+    "@slack/web-api": "^6.5.1",
+    "dotenv": "^10.0.0"
   }
 }
