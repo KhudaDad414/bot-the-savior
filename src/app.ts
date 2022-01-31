@@ -5,7 +5,6 @@ import splitargs from 'splitargs';
 require('dotenv').config();
 
 const SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET!;
-const SLACK_PORT = process.env.SLACK_PORT || '3000';
 
 function getDiscussionGroupId(groupName: string): string {
   switch (groupName.toLowerCase()) {
@@ -64,6 +63,7 @@ slackEvents.on('app_mention', async (event: Event) => {
 
 slackEvents.on('error', console.log);
 
-slackEvents.start(parseInt(SLACK_PORT, 10)).then(() => {
-  console.log(`Server listening on port ${SLACK_PORT}`);
+const PORT = parseInt(process.env.PORT!);
+slackEvents.start(PORT).then(() => {
+  console.log(`Server listening on port ${PORT}`);
 });
