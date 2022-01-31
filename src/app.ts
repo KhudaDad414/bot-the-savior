@@ -31,25 +31,25 @@ const slackEvents = createEventAdapter(SLACK_SIGNING_SECRET);
 slackEvents.on('app_mention', async (event: Event) => {
   let [, command, , discussionGroup]: string[] = splitargs(event.text);
   if (!discussionGroup) discussionGroup = 'Q&amp;A';
-
-  const discussion = new Discussion(event);
+  let discussion = new Discussion(event);
   try {
-    await discussion.parseReplies();
-    if (!discussion.hasAnswer && discussionGroup === 'Q&amp;A') {
+    if (command === 'help') {
       throw Error(
-        `Q&A category requires an answer. please mark your answer by :white_check_mark: reaction to your answer in this thread or specify another category. eg. \`save 'your title' general\``
+        `Here is a list of what I can currently do for you:\n- Save the current thread in\`support\`repo. \n\t- Synctax:\`save <discussion_title> [discussion_category]\` \n\t- Description: The title is mandatory. I will save the discussion in \`Q&A\` category if no \`[discussion_category]\` is provided.`
       );
-    }
-    if (command === 'save') {
+    } else if (command === 'save') {
+      await discussion.parseReplies();
+      if (!discussion.title) throw new Error('no title has been provided.');
+      if (!discussion.hasAnswer && discussionGroup === 'Q&amp;A') {
+        throw Error(
+          `Q&A category requires an answer. please mark your answer by :white_check_mark: reaction to your answer in this thread or specify another category. eg. \`save 'your title' general\``
+        );
+      }
       const discussionURL = await discussion.storeToGitHubDiscussions(
         getDiscussionGroupId(discussionGroup || 'Q&amp;A')
       );
       discussion.postMessage(
         `this conversation has been preserved here: ${discussionURL}`
-      );
-    } else if (command === 'help') {
-      throw Error(
-        `Here is a list of what I can currently do for you:\n- Save the current thread in\`support\`repo. \n\t- Synctax:\`save <discussion_title> [discussion_category]\` \n\t- Description: The title is mandatory. I will save the discussion in \`Q&A\` category if no \`[discussion_category]\` is provided.`
       );
     } else {
       throw Error(

@@ -40,18 +40,20 @@ slackEvents.on('app_mention', (event) => __awaiter(void 0, void 0, void 0, funct
     let [, command, , discussionGroup] = (0, splitargs_1.default)(event.text);
     if (!discussionGroup)
         discussionGroup = 'Q&amp;A';
-    const discussion = new Discussion_1.Discussion(event);
+    let discussion = new Discussion_1.Discussion(event);
     try {
-        yield discussion.parseReplies();
-        if (!discussion.hasAnswer && discussionGroup === 'Q&amp;A') {
-            throw Error(`Q&A category requires an answer. please mark your answer by :white_check_mark: reaction to your answer in this thread or specify another category. eg. \`save 'your title' general\``);
+        if (command === 'help') {
+            throw Error(`Here is a list of what I can currently do for you:\n- Save the current thread in\`support\`repo. \n\t- Synctax:\`save <discussion_title> [discussion_category]\` \n\t- Description: The title is mandatory. I will save the discussion in \`Q&A\` category if no \`[discussion_category]\` is provided.`);
         }
-        if (command === 'save') {
+        else if (command === 'save') {
+            yield discussion.parseReplies();
+            if (!discussion.title)
+                throw new Error('no title has been provided.');
+            if (!discussion.hasAnswer && discussionGroup === 'Q&amp;A') {
+                throw Error(`Q&A category requires an answer. please mark your answer by :white_check_mark: reaction to your answer in this thread or specify another category. eg. \`save 'your title' general\``);
+            }
             const discussionURL = yield discussion.storeToGitHubDiscussions(getDiscussionGroupId(discussionGroup || 'Q&amp;A'));
             discussion.postMessage(`this conversation has been preserved here: ${discussionURL}`);
-        }
-        else if (command === 'help') {
-            throw Error(`Here is a list of what I can currently do for you:\n- Save the current thread in\`support\`repo. \n\t- Synctax:\`save <discussion_title> [discussion_category]\` \n\t- Description: The title is mandatory. I will save the discussion in \`Q&A\` category if no \`[discussion_category]\` is provided.`);
         }
         else {
             throw Error(`Can't understand what you want me to do. you can always mention me with \`help\` command.`);

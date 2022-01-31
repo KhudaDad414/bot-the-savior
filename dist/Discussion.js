@@ -26,8 +26,6 @@ class Discussion {
         const [bot_id, , title] = (0, splitargs_1.default)(event.text);
         this.channel = event.channel;
         this.title = title;
-        if (!this.title)
-            throw new Error('no title has been provided.');
         this.thread_ts = event.thread_ts;
         this.botId = bot_id.slice(2, 13);
     }
