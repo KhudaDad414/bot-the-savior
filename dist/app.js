@@ -44,7 +44,7 @@ slackEvents.on('app_mention', (event) => __awaiter(void 0, void 0, void 0, funct
     try {
         yield discussion.parseReplies();
         if (!discussion.hasAnswer && discussionGroup === 'Q&amp;A') {
-            throw Error(`you don't have any accepted answer for this thread. please mark your answer by :white_check_mark: reaction to your answer.`);
+            throw Error(`Q&A category requires an answer. please mark your answer by :white_check_mark: reaction to your answer in this thread or specify another category. eg. \`save 'your title' general\``);
         }
         if (command === 'save') {
             const discussionURL = yield discussion.storeToGitHubDiscussions(getDiscussionGroupId(discussionGroup || 'Q&amp;A'));

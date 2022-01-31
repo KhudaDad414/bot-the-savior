@@ -37,7 +37,7 @@ slackEvents.on('app_mention', async (event: Event) => {
     await discussion.parseReplies();
     if (!discussion.hasAnswer && discussionGroup === 'Q&amp;A') {
       throw Error(
-        `you don't have any accepted answer for this thread. please mark your answer by :white_check_mark: reaction to your answer.`
+        `Q&A category requires an answer. please mark your answer by :white_check_mark: reaction to your answer in this thread or specify another category. eg. \`save 'your title' general\``
       );
     }
     if (command === 'save') {
