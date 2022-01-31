@@ -14,7 +14,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Discussion = void 0;
 const web_api_1 = require("@slack/web-api");
-const graphql_1 = require("@octokit/graphql");
 // @ts-ignore
 const splitargs_1 = __importDefault(require("splitargs"));
 class Discussion {
@@ -23,7 +22,10 @@ class Discussion {
         this.body = '';
         this.replies = [];
         this.hasAnswer = false;
-        const [bot_id, , title] = (0, splitargs_1.default)(event.text);
+        const [bot_id, , title, category] = (0, splitargs_1.default)(event.text);
+        this.category = (category === null || category === void 0 ? void 0 : category.toLowerCase()) || 'q&a';
+        if (this.category === 'q&amp;a')
+            this.category = 'q&a';
         this.channel = event.channel;
         this.title = title;
         this.thread_ts = event.thread_ts;
@@ -52,77 +54,6 @@ class Discussion {
             else {
                 console.error("couldn't fetch the thread.");
             }
-        });
-    }
-    storeToGitHubDiscussions(discussionCategoryId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const { createDiscussion } = yield (0, graphql_1.graphql)(`
-      mutation {
-        createDiscussion(
-          input: {
-            repositoryId: "R_kgDOGp_8nA"
-            title: "${this.title}"
-            body: "${this.body}"
-            categoryId: "${discussionCategoryId}"
-          }
-        ) {
-          discussion {
-            id
-            url
-          }
-        }
-      }
-    `, {
-                headers: {
-                    authorization: `token ${process.env.GITHUB_TOKEN}`,
-                },
-            });
-            const discussionId = createDiscussion.discussion.id;
-            this.storeReplies(discussionId);
-            return createDiscussion.discussion.url;
-        });
-    }
-    storeReplies(discussionId) {
-        if (!this.replies)
-            return;
-        this.replies.map((message) => __awaiter(this, void 0, void 0, function* () {
-            const { addDiscussionComment } = yield (0, graphql_1.graphql)(`
-      mutation {
-        addDiscussionComment(
-          input: {
-            discussionId: "${discussionId}"
-            body: "${message.body}"
-          }
-        ) {
-          comment {
-            id
-          }
-        }
-      }
-    `, {
-                headers: {
-                    authorization: `token ${process.env.GITHUB_TOKEN}`,
-                },
-            });
-            const commentId = addDiscussionComment.comment.id;
-            if (message.isAnswer && commentId) {
-                this.markAnswer(commentId);
-            }
-        }));
-    }
-    markAnswer(commentId) {
-        (0, graphql_1.graphql)(`
-  mutation {
-    markDiscussionCommentAsAnswer(input: {id: "${commentId}" }) {
-      discussion {
-        id
-      }
-    }
-  }
-  `, {
-            headers: {
-                authorization: `token ${process.env.GITHUB_TOKEN}`,
-            },
         });
     }
     postMessage(message) {
