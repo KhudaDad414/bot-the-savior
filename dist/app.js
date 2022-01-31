@@ -50,8 +50,11 @@ slackEvents.on('app_mention', (event) => __awaiter(void 0, void 0, void 0, funct
             const discussionURL = yield discussion.storeToGitHubDiscussions(getDiscussionGroupId(discussionGroup || 'Q&amp;A'));
             discussion.postMessage(`this conversation has been preserved here: ${discussionURL}`);
         }
+        else if (command === 'help') {
+            throw Error(`Here is a list of what I can currently do for you:\n- Save the current thread in\`support\`repo. \n\t- Synctax:\`save <discussion_title> [discussion_category]\` \n\t- Description: The title is mandatory. I will save the discussion in \`Q&A\` category if no \`[discussion_category]\` is provided.`);
+        }
         else {
-            throw Error(`Can't understand what you want me to do.\nHere is a list of what I can currently do for you:\n- Save the current thread in\`support\`repo. \n\t- Synctax:\`save <discussion_title> [discussion_category]\` \n\t- Description: The title is mandatory. I will save the discussion in \`Q&A\` category if no \`[discussion_category]\` is provided.`);
+            throw Error(`Can't understand what you want me to do. you can always mention me with \`help\` command.`);
         }
     }
     catch (err) {
