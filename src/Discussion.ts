@@ -1,5 +1,4 @@
 import { WebClient } from '@slack/web-api';
-import { graphql } from '@octokit/graphql';
 // @ts-ignore
 import splitargs from 'splitargs';
 
@@ -23,9 +22,12 @@ export class Discussion {
   replies: DiscussionReply[] = [];
   hasAnswer: boolean = false;
   botId: string;
+  category: string;
 
   constructor(event: Event) {
-    const [bot_id, , title]: string[] = splitargs(event.text);
+    const [bot_id, , title, category]: string[] = splitargs(event.text);
+    this.category = category?.toLowerCase() || 'q&a';
+    if (this.category === 'q&amp;a') this.category = 'q&a';
     this.channel = event.channel;
     this.title = title;
     this.thread_ts = event.thread_ts;
@@ -60,85 +62,6 @@ export class Discussion {
     } else {
       console.error("couldn't fetch the thread.");
     }
-  }
-  async storeToGitHubDiscussions(discussionCategoryId: string) {
-    const { createDiscussion } = await graphql(
-      `
-      mutation {
-        createDiscussion(
-          input: {
-            repositoryId: "R_kgDOGp_8nA"
-            title: "${this.title}"
-            body: "${this.body}"
-            categoryId: "${discussionCategoryId}"
-          }
-        ) {
-          discussion {
-            id
-            url
-          }
-        }
-      }
-    `,
-      {
-        headers: {
-          authorization: `token ${process.env.GITHUB_TOKEN}`,
-        },
-      }
-    );
-    const discussionId = createDiscussion.discussion.id;
-    this.storeReplies(discussionId);
-    return createDiscussion.discussion.url;
-  }
-
-  private storeReplies(discussionId: string) {
-    if (!this.replies) return;
-    this.replies.map(async (message) => {
-      const { addDiscussionComment } = await graphql(
-        `
-      mutation {
-        addDiscussionComment(
-          input: {
-            discussionId: "${discussionId}"
-            body: "${message.body}"
-          }
-        ) {
-          comment {
-            id
-          }
-        }
-      }
-    `,
-        {
-          headers: {
-            authorization: `token ${process.env.GITHUB_TOKEN}`,
-          },
-        }
-      );
-      const commentId = addDiscussionComment.comment.id;
-      if (message.isAnswer && commentId) {
-        this.markAnswer(commentId);
-      }
-    });
-  }
-
-  private markAnswer(commentId: string) {
-    graphql(
-      `
-  mutation {
-    markDiscussionCommentAsAnswer(input: {id: "${commentId}" }) {
-      discussion {
-        id
-      }
-    }
-  }
-  `,
-      {
-        headers: {
-          authorization: `token ${process.env.GITHUB_TOKEN}`,
-        },
-      }
-    );
   }
   postMessage(message: string) {
     this.slackClient.chat.postMessage({
