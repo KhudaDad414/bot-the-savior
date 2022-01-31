@@ -62,7 +62,7 @@ slackEvents.on('app_mention', async (event: Event) => {
   }
 });
 
-slackEvents.on('error', console.error);
+slackEvents.on('error', console.log);
 
 slackEvents.start(parseInt(SLACK_PORT, 10)).then(() => {
   console.log(`Server listening on port ${SLACK_PORT}`);
