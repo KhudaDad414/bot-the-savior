@@ -35,7 +35,7 @@ slackEvents.on('app_mention', async (event: Event) => {
   try {
     if (command === 'help') {
       throw Error(
-        `Here is a list of what I can currently do for you:\n- Save the current thread in\`support\`repo. \n\t- Synctax:\`save <discussion_title> [discussion_category]\` \n\t- Description: The title is mandatory. I will save the discussion in \`Q&A\` category if no \`[discussion_category]\` is provided.`
+        `Here is a list of what I can currently do for you:\n- Save the current thread in\`support\`repo. \n\t- Synctax:\`save <discussion_title> [discussion_category]\` \n\t- Description: \`discussion_title\`: the title of the discussion that should be saved in github discussions.(mandatory) \n \`discussion_category\` : can be \`general,Q&amp;A, ideas, announcements, show and tell q\` (default: Q&amp;A).`
       );
     } else if (command === 'save') {
       await discussion.parseReplies();
