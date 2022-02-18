@@ -1,6 +1,12 @@
 # Bot The Savior
 A slack bot that will help you save your slack discussions as GitHub discussion in a repo.
 
+
+- [Getting Started](#getting-started)
+  * [Create A Slack App](#create-a-slack-app)
+  * [Host This app](#host-this-app)
+  * [Update the request_url in App Manifest](#update-the-request-url-in-app-manifest)
+
 # Getting Started
 If you want to use this bot in your slack workspace follow the following steps:
 ## Create A Slack App
@@ -49,7 +55,7 @@ Host this node app somewhere with the following Environment Variables:
 | REPO_OWNER | the owner of the github repository for saving the discussions |
 | REPO_NAME | the name of the github repository for saving the discussions |
 
-## Update the `request_url` in `App Manifest`
+## Update the request_url in App Manifest
 ```yaml
 request_url: https://CURRENT_APP_DOMAIN_OR_IP_ADDRESS/slack/events
 ```
