@@ -6,6 +6,8 @@ A slack bot that will help you save your slack discussions as GitHub discussion 
   * [Create A Slack App](#create-a-slack-app)
   * [Host This app](#host-this-app)
   * [Update the request_url in App Manifest](#update-the-request-url-in-app-manifest)
+- [How to use](#how-to-use)
+  * [Save discussion](#save-discussion)
 
 ## Getting Started
 If you want to use this bot in your slack workspace follow the following steps:
