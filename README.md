@@ -50,6 +50,6 @@ Host this node app somewhere with the following Environment Variables:
 | REPO_NAME | the name of the github repository for saving the discussions |
 
 ## Update the `request_url` in `App Manifest`
-```
+```yaml
 request_url: https://CURRENT_APP_DOMAIN_OR_IP_ADDRESS/slack/events
 ```
