@@ -7,9 +7,9 @@ A slack bot that will help you save your slack discussions as GitHub discussion 
   * [Host This app](#host-this-app)
   * [Update the request_url in App Manifest](#update-the-request-url-in-app-manifest)
 
-# Getting Started
+## Getting Started
 If you want to use this bot in your slack workspace follow the following steps:
-## Create A Slack App
+### Create A Slack App
 This app will work as the backend for your bot, so you first need to create a slack app and give it the appropriat permissions.
 Your slack bot should have the following permissions:
 
@@ -45,7 +45,7 @@ settings:
   socket_mode_enabled: false
   token_rotation_enabled: false
 ```
-## Host This app
+### Host This app
 Host this node app somewhere with the following Environment Variables:
 | Name | Explaination |
 | --- | --- |
@@ -55,7 +55,7 @@ Host this node app somewhere with the following Environment Variables:
 | REPO_OWNER | the owner of the github repository for saving the discussions |
 | REPO_NAME | the name of the github repository for saving the discussions |
 
-## Update the request_url in App Manifest
+### Update the request_url in App Manifest
 ```yaml
 request_url: https://CURRENT_APP_DOMAIN_OR_IP_ADDRESS/slack/events
 ```
