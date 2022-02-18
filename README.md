@@ -59,3 +59,11 @@ Host this node app somewhere with the following Environment Variables:
 ```yaml
 request_url: https://CURRENT_APP_DOMAIN_OR_IP_ADDRESS/slack/events
 ```
+
+## How to use
+The app will respond only if you mention it in a thread. so your command should look like this: `@Chan help`.
+### Save discussion
+
+- Synctax: `@Chan save <discussion_title> [discussion_category]`
+- discussion_title: the title of the discussion that should be saved in github discussions. (mandatory)
+- discussion_category : the category of discussion in github. (default: Q&A).
