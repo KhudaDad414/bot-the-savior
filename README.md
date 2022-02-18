@@ -46,4 +46,10 @@ Host this node app somewhere with the following Environment Variables:
 | SLACK_SIGNING_SECRET | You can get your Slack Signing Secret from your Slack App in the following location: `Settings -> Basic Info -> App Credentials`. |
 | SLACK_TOKEN | For getting your slack Token, you need to install your Slack App in a Workspace. go to `Settings -> Install App` install the app in one of your workspaces and the this token will appear in `Settings -> Install App` page. | |
 | GITHUB_TOKEN | this token needs to have the permission to create discussions in your repo. |
+| REPO_OWNER | the owner of the github repository for saving the discussions |
+| REPO_NAME | the name of the github repository for saving the discussions |
 
+## Update the `request_url` in `App Manifest`
+```
+request_url: https://CURRENT_APP_DOMAIN_OR_IP_ADDRESS/slack/events
+```
