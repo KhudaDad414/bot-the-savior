@@ -11,33 +11,36 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const graphql_1 = require("@octokit/graphql");
 class GitHubRepository {
-    constructor(repoId) {
+    constructor(repoId, discussionCategories) {
         this.repoId = repoId;
+        this.discussionCategories = discussionCategories;
         this.headers = {
             headers: {
                 authorization: `token ${process.env.GITHUB_TOKEN}`,
             },
         };
     }
-    parseDiscussionCategories() {
+    static getInstance(owner, name) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { node } = yield (0, graphql_1.graphql)(`
-      {
-        node(id: "${this.repoId}") {
-          ... on Repository {
-            discussionCategories(first: 10) {
-              nodes {
-                name
-                id
-              }
-            }
+            const { repository } = yield (0, graphql_1.graphql)(`query { 
+      repository(owner: "${owner}", name: "${name}"){
+        id
+        discussionCategories(first: 10) {
+          nodes {
+            name
+            id
           }
         }
       }
-      `, this.headers);
-            this.discussionCategories = node.discussionCategories.nodes.reduce((acc, category) => {
+    }`, {
+                headers: {
+                    authorization: `token ${process.env.GITHUB_TOKEN}`,
+                },
+            });
+            const discussionCategories = repository.discussionCategories.nodes.reduce((acc, category) => {
                 return Object.assign(Object.assign({}, acc), { [category.name.toLowerCase()]: category.id });
             }, {});
+            return new GitHubRepository(repository.id, discussionCategories);
         });
     }
     createDiscussion(discussion) {

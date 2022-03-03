@@ -18,37 +18,41 @@ const GithubReposity_1 = __importDefault(require("./GithubReposity"));
 require('dotenv').config();
 const SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET;
 const slackEvents = (0, events_api_1.createEventAdapter)(SLACK_SIGNING_SECRET);
-const gitHubRepository = new GithubReposity_1.default(process.env.REPO_ID);
-gitHubRepository.parseDiscussionCategories();
-slackEvents.on('app_mention', (event) => __awaiter(void 0, void 0, void 0, function* () {
-    const command = event.text.split(' ')[1];
-    let discussion = new Discussion_1.Discussion(event);
-    try {
-        if (command === 'help') {
-            discussion.postMessage(`Here is a list of what I can currently do for you:\n- Save the current thread in \`support\` repo. \n\t- Synctax:\`save <discussion_title> [discussion_category]\` \n\t- \`discussion_title\`: the title of the discussion that should be saved in github discussions.(mandatory) \n\t- \`discussion_category\` : can be \`${Object.keys(gitHubRepository.discussionCategories)}\` (default: Q&A).`);
-        }
-        else if (command === 'save') {
-            yield discussion.parseReplies();
-            if (!discussion.title)
-                throw new Error('no title has been provided.');
-            if (!discussion.hasAnswer && discussion.category === 'q&a') {
-                throw Error(`Q&A category requires an answer. please mark your answer by :white_check_mark: reaction to your answer in this thread or specify another category. eg. \`save 'your title' general\``);
+function run() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const gitHubRepository = yield GithubReposity_1.default.getInstance(process.env.REPO_OWNER, process.env.REPO_NAME);
+        slackEvents.on('app_mention', (event) => __awaiter(this, void 0, void 0, function* () {
+            const command = event.text.split(' ')[1];
+            let discussion = new Discussion_1.Discussion(event);
+            try {
+                if (command === 'help') {
+                    discussion.postMessage(`Here is a list of what I can currently do for you:\n- Save the current thread in \`support\` repo. \n\t- Synctax:\`save <discussion_title> [discussion_category]\` \n\t- \`discussion_title\`: the title of the discussion that should be saved in github discussions.(mandatory) \n\t- \`discussion_category\` : can be \`${Object.keys(gitHubRepository.discussionCategories)}\` (default: Q&A).`);
+                }
+                else if (command === 'save') {
+                    yield discussion.parseReplies();
+                    if (!discussion.title)
+                        throw new Error('no title has been provided.');
+                    if (!discussion.hasAnswer && discussion.category === 'q&a') {
+                        throw Error(`Q&A category requires an answer. please mark your answer by :white_check_mark: reaction to your answer in this thread or specify another category. eg. \`save 'your title' general\``);
+                    }
+                    const discussionURL = yield gitHubRepository.createDiscussion(discussion);
+                    discussion.postMessage(`this conversation has been preserved here: ${discussionURL}`);
+                }
+                else {
+                    throw Error(`Can't understand what you want me to do. you can always mention me with \`help\` command.`);
+                }
             }
-            const discussionURL = yield gitHubRepository.createDiscussion(discussion);
-            discussion.postMessage(`this conversation has been preserved here: ${discussionURL}`);
-        }
-        else {
-            throw Error(`Can't understand what you want me to do. you can always mention me with \`help\` command.`);
-        }
-    }
-    catch (err) {
-        discussion.postMessage(err.message ||
-            "Something, somewhere went terribly wrong. that's all I know.");
-        console.error(err);
-    }
-}));
-slackEvents.on('error', console.log);
-const PORT = parseInt(process.env.PORT, 10);
-slackEvents.start(PORT).then(() => {
-    console.log(`Server listening on port ${PORT}`);
-});
+            catch (err) {
+                discussion.postMessage(err.message ||
+                    "Something, somewhere went terribly wrong. that's all I know.");
+                console.error(err);
+            }
+        }));
+        slackEvents.on('error', console.log);
+        const PORT = parseInt(process.env.PORT, 10);
+        slackEvents.start(PORT).then(() => {
+            console.log(`Server listening on port ${PORT}`);
+        });
+    });
+}
+run();

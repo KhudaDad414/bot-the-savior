@@ -1,37 +1,44 @@
 import { graphql } from '@octokit/graphql';
 import { Discussion } from './Discussion';
 export default class GitHubRepository {
-  discussionCategories: any;
   private headers = {
     headers: {
       authorization: `token ${process.env.GITHUB_TOKEN}`,
     },
   };
-  constructor(public repoId: string) {}
-  async parseDiscussionCategories() {
-    const { node } = await graphql(
-      `
-      {
-        node(id: "${this.repoId}") {
-          ... on Repository {
-            discussionCategories(first: 10) {
-              nodes {
-                name
-                id
-              }
-            }
+  private constructor(
+    public repoId: string,
+    public discussionCategories: any
+  ) {}
+
+  static async getInstance(owner: string, name: string) {
+    const { repository } = await graphql(
+      `query { 
+      repository(owner: "${owner}", name: "${name}"){
+        id
+        discussionCategories(first: 10) {
+          nodes {
+            name
+            id
           }
         }
       }
-      `,
-      this.headers
+    }`,
+      {
+        headers: {
+          authorization: `token ${process.env.GITHUB_TOKEN}`,
+        },
+      }
     );
-    this.discussionCategories = node.discussionCategories.nodes.reduce(
+
+    const discussionCategories = repository.discussionCategories.nodes.reduce(
       (acc: any, category: any) => {
         return { ...acc, [category.name.toLowerCase()]: category.id };
       },
       {}
     );
+
+    return new GitHubRepository(repository.id, discussionCategories);
   }
   async createDiscussion(discussion: Discussion) {
     if (!this.discussionCategories) {
