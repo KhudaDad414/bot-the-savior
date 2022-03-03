@@ -1,18 +1,13 @@
-import { graphql } from '@octokit/graphql';
+import fetchGraphql from './fetchGraphql';
 import { Discussion } from './Discussion';
 export default class GitHubRepository {
-  private headers = {
-    headers: {
-      authorization: `token ${process.env.GITHUB_TOKEN}`,
-    },
-  };
   private constructor(
     public repoId: string,
     public discussionCategories: any
   ) {}
 
   static async getInstance(owner: string, name: string) {
-    const { repository } = await graphql(
+    const { repository } = await fetchGraphql(
       `query { 
       repository(owner: "${owner}", name: "${name}"){
         id
@@ -23,12 +18,7 @@ export default class GitHubRepository {
           }
         }
       }
-    }`,
-      {
-        headers: {
-          authorization: `token ${process.env.GITHUB_TOKEN}`,
-        },
-      }
+    }`
     );
 
     const discussionCategories = repository.discussionCategories.nodes.reduce(
@@ -51,7 +41,7 @@ export default class GitHubRepository {
       throw Error(
         `You have provided '${discussion.category}' as the discussion category and I can't find it.`
       );
-    const { createDiscussion } = await graphql(
+    const { createDiscussion } = await fetchGraphql(
       `
       mutation {
         createDiscussion(
@@ -68,8 +58,7 @@ export default class GitHubRepository {
           }
         }
       }
-    `,
-      this.headers
+    `
     );
     const gitHubDiscussionId = createDiscussion.discussion.id;
     this.createDicussionComments(gitHubDiscussionId, discussion);
@@ -81,7 +70,7 @@ export default class GitHubRepository {
   ) {
     if (!discussion.replies) return;
     discussion.replies.map(async (message) => {
-      const { addDiscussionComment } = await graphql(
+      const { addDiscussionComment } = await fetchGraphql(
         `
       mutation {
         addDiscussionComment(
@@ -95,8 +84,7 @@ export default class GitHubRepository {
           }
         }
       }
-    `,
-        this.headers
+    `
       );
       const commentId = addDiscussionComment.comment.id;
       if (message.isAnswer && commentId) {
@@ -105,7 +93,7 @@ export default class GitHubRepository {
     });
   }
   private markAnswer(commentId: string) {
-    graphql(
+    fetchGraphql(
       `
   mutation {
     markDiscussionCommentAsAnswer(input: {id: "${commentId}" }) {
@@ -114,8 +102,7 @@ export default class GitHubRepository {
       }
     }
   }
-  `,
-      this.headers
+  `
     );
   }
 }

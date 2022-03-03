@@ -8,21 +8,19 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const graphql_1 = require("@octokit/graphql");
+const fetchGraphql_1 = __importDefault(require("./fetchGraphql"));
 class GitHubRepository {
     constructor(repoId, discussionCategories) {
         this.repoId = repoId;
         this.discussionCategories = discussionCategories;
-        this.headers = {
-            headers: {
-                authorization: `token ${process.env.GITHUB_TOKEN}`,
-            },
-        };
     }
     static getInstance(owner, name) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { repository } = yield (0, graphql_1.graphql)(`query { 
+            const { repository } = yield (0, fetchGraphql_1.default)(`query { 
       repository(owner: "${owner}", name: "${name}"){
         id
         discussionCategories(first: 10) {
@@ -32,11 +30,7 @@ class GitHubRepository {
           }
         }
       }
-    }`, {
-                headers: {
-                    authorization: `token ${process.env.GITHUB_TOKEN}`,
-                },
-            });
+    }`);
             const discussionCategories = repository.discussionCategories.nodes.reduce((acc, category) => {
                 return Object.assign(Object.assign({}, acc), { [category.name.toLowerCase()]: category.id });
             }, {});
@@ -51,7 +45,7 @@ class GitHubRepository {
             }
             if (!(discussion.category in this.discussionCategories))
                 throw Error(`You have provided '${discussion.category}' as the discussion category and I can't find it.`);
-            const { createDiscussion } = yield (0, graphql_1.graphql)(`
+            const { createDiscussion } = yield (0, fetchGraphql_1.default)(`
       mutation {
         createDiscussion(
           input: {
@@ -67,7 +61,7 @@ class GitHubRepository {
           }
         }
       }
-    `, this.headers);
+    `);
             const gitHubDiscussionId = createDiscussion.discussion.id;
             this.createDicussionComments(gitHubDiscussionId, discussion);
             return createDiscussion.discussion.url;
@@ -78,7 +72,7 @@ class GitHubRepository {
             if (!discussion.replies)
                 return;
             discussion.replies.map((message) => __awaiter(this, void 0, void 0, function* () {
-                const { addDiscussionComment } = yield (0, graphql_1.graphql)(`
+                const { addDiscussionComment } = yield (0, fetchGraphql_1.default)(`
       mutation {
         addDiscussionComment(
           input: {
@@ -91,7 +85,7 @@ class GitHubRepository {
           }
         }
       }
-    `, this.headers);
+    `);
                 const commentId = addDiscussionComment.comment.id;
                 if (message.isAnswer && commentId) {
                     this.markAnswer(commentId);
@@ -100,7 +94,7 @@ class GitHubRepository {
         });
     }
     markAnswer(commentId) {
-        (0, graphql_1.graphql)(`
+        (0, fetchGraphql_1.default)(`
   mutation {
     markDiscussionCommentAsAnswer(input: {id: "${commentId}" }) {
       discussion {
@@ -108,7 +102,7 @@ class GitHubRepository {
       }
     }
   }
-  `, this.headers);
+  `);
     }
 }
 exports.default = GitHubRepository;

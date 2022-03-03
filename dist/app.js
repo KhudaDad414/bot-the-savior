@@ -26,7 +26,7 @@ function run() {
             let discussion = new Discussion_1.Discussion(event);
             try {
                 if (command === 'help') {
-                    discussion.postMessage(`Here is a list of what I can currently do for you:\n- Save the current thread in \`support\` repo. \n\t- Synctax:\`save <discussion_title> [discussion_category]\` \n\t- \`discussion_title\`: the title of the discussion that should be saved in github discussions.(mandatory) \n\t- \`discussion_category\` : can be \`${Object.keys(gitHubRepository.discussionCategories)}\` (default: Q&A).`);
+                    discussion.postMessage(`Here is a list of what I can currently do for you:\n- Save the current thread in \`support\` repo. \n\t- Synctax:\`save <discussion_title> [discussion_category]\` \n\t- \`discussion_title\`: the title of the discussion that should be saved in github discussions.(mandatory) \n\t- \`discussion_category\` : can be \`${Object.keys(gitHubRepository.discussionCategories).join(', ')}\` (default: Q&A).`);
                 }
                 else if (command === 'save') {
                     yield discussion.parseReplies();
