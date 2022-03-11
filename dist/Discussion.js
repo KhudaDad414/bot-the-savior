@@ -62,6 +62,7 @@ class Discussion {
             text: message,
             as_user: true,
             thread_ts: this.thread_ts,
+            icon_url: 'https://avatars.githubusercontent.com/u/61865014',
         });
     }
 }
