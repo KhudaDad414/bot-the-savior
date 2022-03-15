@@ -1,4 +1,4 @@
-# Bot The Savior
+# Bot The Saviour
 A slack bot that will help you save your slack discussions as GitHub discussion in a repo.
 
 
