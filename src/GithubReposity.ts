@@ -7,6 +7,7 @@ export default class GitHubRepository {
   ) {}
 
   static async getInstance(owner: string, name: string) {
+    console.log('getting the repository info...');
     const { repository } = await fetchGraphql(
       `query { 
       repository(owner: "${owner}", name: "${name}"){
@@ -37,10 +38,7 @@ export default class GitHubRepository {
       );
       return;
     }
-    if (!(discussion.category in this.discussionCategories))
-      throw Error(
-        `You have provided '${discussion.category}' as the discussion category and I can't find it.`
-      );
+    console.log('creating discussion with title:', discussion.category);
     const { createDiscussion } = await fetchGraphql(
       `
       mutation {
@@ -48,8 +46,8 @@ export default class GitHubRepository {
           input: {
             repositoryId: "${this.repoId}"
             title: "${discussion.title}"
-            body: "${discussion.body}"
-            categoryId: "${this.discussionCategories[discussion.category]}"
+            body: "${discussion.message}"
+            categoryId: "${discussion.category}"
           }
         ) {
           discussion {
@@ -70,6 +68,7 @@ export default class GitHubRepository {
   ) {
     if (!discussion.replies) return;
     discussion.replies.map(async (message) => {
+      console.log('adding comment to discussion:', gitHubDiscussionId);
       const { addDiscussionComment } = await fetchGraphql(
         `
       mutation {
@@ -93,6 +92,7 @@ export default class GitHubRepository {
     });
   }
   private markAnswer(commentId: string) {
+    console.log('marking the answer.');
     fetchGraphql(
       `
   mutation {

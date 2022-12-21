@@ -9,19 +9,31 @@ require('dotenv').config();
 const app = express();
 const client = new WebClient(process.env.SLACK_TOKEN);
 let githubReposity: GitHubRepository;
-
+let discussion: Discussion;
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.post('/save', (req, res) => {
   const payload = JSON.parse(req.body.payload);
-  console.log(payload);
   if (payload.type === 'dialog_submission') {
-    console.log('saving to github...');
+    console.log(payload);
+    discussion.title = payload.submission.title;
+    discussion.category = payload.submission.category;
+    githubReposity.createDiscussion(discussion);
     res.status(200).send();
     return;
+  } else if (payload.type === 'message_action') {
+    discussion = new Discussion(payload.message.ts, payload.channel.id);
+    discussion.parseReplies();
+    showPrompt(payload.trigger_id);
   }
   // Save the data to a database or file system
-  console.log(githubReposity.discussionCategories);
+});
+
+const PORT = parseInt(process.env.PORT!, 10);
+app.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
+});
+function showPrompt(trigger_id: string) {
   client.dialog.open({
     dialog: {
       callback_id: 'ryde-46e2b0',
@@ -47,15 +59,9 @@ app.post('/save', (req, res) => {
         },
       ],
     },
-    trigger_id: payload.trigger_id,
+    trigger_id,
   });
-});
-
-const PORT = parseInt(process.env.PORT!, 10);
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
-});
-
+}
 function toTitleCase(title: string) {
   return title
     .split(' ')

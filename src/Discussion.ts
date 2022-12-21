@@ -15,57 +15,63 @@ interface DiscussionReply {
 }
 export class Discussion {
   private slackClient = new WebClient(process.env.SLACK_TOKEN);
-  channel: any;
-  title: string;
-  thread_ts: string;
-  body: string = '';
+  _title?: string;
+  message?: string = '';
   replies: DiscussionReply[] = [];
   hasAnswer: boolean = false;
-  botId: string;
-  category: string;
+  _category?: string;
+  thread_ts?: string;
 
-  constructor(event: Event) {
-    const [bot_id, , title, category]: string[] = splitargs(event.text);
-    this.category = category?.toLowerCase() || 'q&a';
-    if (this.category === 'q&amp;a') this.category = 'q&a';
-    this.channel = event.channel;
-    this.title = title;
-    this.thread_ts = event.thread_ts;
-    this.botId = bot_id.slice(2, 13);
+  constructor(private _ts: string, private _channelId: string) {}
+
+  set title(title: string) {
+    this._title = title;
   }
-
+  get title(): string {
+    return this._title ?? '';
+  }
+  set category(category: string) {
+    this._category = category;
+  }
+  get category() {
+    return this._category ?? '';
+  }
   async parseReplies() {
+    console.log(this._ts, this._channelId);
+    const response = await this.slackClient.conversations.history({
+      channel: this._channelId,
+      latest: this._ts,
+      limit: 1,
+      inclusive: true,
+    });
+    if (!response.messages) return;
+    this.message = response.messages[0]?.text;
+    if (response.messages) this.thread_ts = response.messages[0].thread_ts;
+    if (!this.thread_ts) return;
     const threadMessages = await this.slackClient.conversations.replies({
-      channel: this.channel,
+      channel: this._channelId,
       ts: this.thread_ts,
     });
     if (threadMessages.messages) {
-      this.body = threadMessages.messages[0].text!;
-      this.replies = threadMessages.messages
-        .slice(1)
-        .filter(
-          (message: any) =>
-            !(message.text.includes(this.botId) || message.user === this.botId)
-        )
-        .map((message: any) => {
-          const isAnswer =
-            message.reactions &&
-            message.reactions.filter(
-              (reaction: { name: string }) =>
-                reaction.name === 'white_check_mark'
-            ).length > 0;
-          if (isAnswer) {
-            this.hasAnswer = true;
-          }
-          return { body: message.text, isAnswer, ts: message.ts };
-        });
+      this.replies = threadMessages.messages.slice(1).map((message: any) => {
+        const isAnswer =
+          message.reactions &&
+          message.reactions.filter(
+            (reaction: { name: string }) => reaction.name === 'white_check_mark'
+          ).length > 0;
+        if (isAnswer) {
+          this.hasAnswer = true;
+        }
+        return { body: message.text, isAnswer, ts: message.ts };
+      });
     } else {
       console.error("couldn't fetch the thread.");
     }
   }
+
   postMessage(message: string) {
     this.slackClient.chat.postMessage({
-      channel: this.channel,
+      channel: this._channelId,
       text: message,
       as_user: true,
       thread_ts: this.thread_ts,
