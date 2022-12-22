@@ -72,7 +72,7 @@ Host this node app somewhere with the following Environment Variables:
 ### Update the request_url in App Manifest
 
 ```yaml
-request_url: https://YOUR_ADDRESS/save/save
+request_url: https://YOUR_ADDRESS/save
 ```
 
 ## How to use
