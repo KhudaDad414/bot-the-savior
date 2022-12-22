@@ -20,6 +20,7 @@ class GitHubRepository {
     }
     static getInstance(owner, name) {
         return __awaiter(this, void 0, void 0, function* () {
+            console.log('getting the repository info...');
             const { repository } = yield (0, fetchGraphql_1.default)(`query { 
       repository(owner: "${owner}", name: "${name}"){
         id
@@ -41,18 +42,17 @@ class GitHubRepository {
         return __awaiter(this, void 0, void 0, function* () {
             if (!this.discussionCategories) {
                 console.error('please make sure to call parseDiscussionCategories() before creating a discussion.');
-                return;
+                return '';
             }
-            if (!(discussion.category in this.discussionCategories))
-                throw Error(`You have provided '${discussion.category}' as the discussion category and I can't find it.`);
+            console.log('creating discussion with title:', discussion.category);
             const { createDiscussion } = yield (0, fetchGraphql_1.default)(`
       mutation {
         createDiscussion(
           input: {
             repositoryId: "${this.repoId}"
             title: "${discussion.title}"
-            body: "${discussion.body}"
-            categoryId: "${this.discussionCategories[discussion.category]}"
+            body: "${discussion._message}"
+            categoryId: "${discussion.category}"
           }
         ) {
           discussion {
@@ -63,16 +63,21 @@ class GitHubRepository {
       }
     `);
             const gitHubDiscussionId = createDiscussion.discussion.id;
-            this.createDicussionComments(gitHubDiscussionId, discussion);
-            return createDiscussion.discussion.url;
+            const commentsCreated = yield this.createDicussionComments(gitHubDiscussionId, discussion);
+            if (commentsCreated) {
+                return createDiscussion.discussion.url;
+            }
+            return '';
         });
     }
     createDicussionComments(gitHubDiscussionId, discussion) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (!discussion.replies)
-                return;
-            discussion.replies.map((message) => __awaiter(this, void 0, void 0, function* () {
-                const { addDiscussionComment } = yield (0, fetchGraphql_1.default)(`
+            if (!discussion._replies)
+                return true;
+            try {
+                discussion._replies.map((message) => __awaiter(this, void 0, void 0, function* () {
+                    console.log('adding comment to discussion:', gitHubDiscussionId);
+                    const { addDiscussionComment } = yield (0, fetchGraphql_1.default)(`
       mutation {
         addDiscussionComment(
           input: {
@@ -86,15 +91,23 @@ class GitHubRepository {
         }
       }
     `);
-                const commentId = addDiscussionComment.comment.id;
-                if (message.isAnswer && commentId) {
-                    this.markAnswer(commentId);
-                }
-            }));
+                    const commentId = addDiscussionComment.comment.id;
+                    if (message.isAnswer && commentId) {
+                        this.markAnswer(commentId);
+                    }
+                }));
+            }
+            catch (err) {
+                console.error(err);
+                return false;
+            }
+            return true;
         });
     }
     markAnswer(commentId) {
-        (0, fetchGraphql_1.default)(`
+        console.log('marking the answer.');
+        try {
+            (0, fetchGraphql_1.default)(`
   mutation {
     markDiscussionCommentAsAnswer(input: {id: "${commentId}" }) {
       discussion {
@@ -103,6 +116,10 @@ class GitHubRepository {
     }
   }
   `);
+        }
+        catch (err) {
+            // do nothing since the type of discussion does not accept answers.
+        }
     }
 }
 exports.default = GitHubRepository;

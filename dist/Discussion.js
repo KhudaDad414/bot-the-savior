@@ -8,60 +8,78 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Discussion = void 0;
 const web_api_1 = require("@slack/web-api");
-// @ts-ignore
-const splitargs_1 = __importDefault(require("splitargs"));
 class Discussion {
-    constructor(event) {
+    constructor(_ts, _channelId, responseUrl) {
+        this._ts = _ts;
+        this._channelId = _channelId;
+        this.responseUrl = responseUrl;
         this.slackClient = new web_api_1.WebClient(process.env.SLACK_TOKEN);
-        this.body = '';
-        this.replies = [];
-        this.hasAnswer = false;
-        const [bot_id, , title, category] = (0, splitargs_1.default)(event.text);
-        this.category = (category === null || category === void 0 ? void 0 : category.toLowerCase()) || 'q&a';
-        if (this.category === 'q&amp;a')
-            this.category = 'q&a';
-        this.channel = event.channel;
-        this.title = title;
-        this.thread_ts = event.thread_ts;
-        this.botId = bot_id.slice(2, 13);
+        this._message = '';
+        this._replies = [];
+        this._hasAnswer = false;
+    }
+    setTitle(title) {
+        this._title = title;
+    }
+    get title() {
+        var _a;
+        return (_a = this._title) !== null && _a !== void 0 ? _a : '';
+    }
+    setCategory(category) {
+        this._category = category;
+    }
+    get category() {
+        var _a;
+        return (_a = this._category) !== null && _a !== void 0 ? _a : '';
     }
     parseReplies() {
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
-            const threadMessages = yield this.slackClient.conversations.replies({
-                channel: this.channel,
-                ts: this.thread_ts,
-            });
-            if (threadMessages.messages) {
-                this.body = threadMessages.messages[0].text;
-                this.replies = threadMessages.messages
-                    .slice(1)
-                    .filter((message) => !(message.text.includes(this.botId) || message.user === this.botId))
-                    .map((message) => {
-                    const isAnswer = message.reactions &&
-                        message.reactions.filter((reaction) => reaction.name === 'white_check_mark').length > 0;
-                    if (isAnswer) {
-                        this.hasAnswer = true;
-                    }
-                    return { body: message.text, isAnswer, ts: message.ts };
+            let response;
+            try {
+                response = yield this.slackClient.conversations.history({
+                    channel: this._channelId,
+                    latest: this._ts,
+                    limit: 1,
+                    inclusive: true,
                 });
             }
-            else {
-                console.error("couldn't fetch the thread.");
+            catch (err) {
+                throw new Error("can't preserve this conversation since I am not a member of this channel. Please invite me using `/invite @Chan` first.");
             }
+            if (!response.messages)
+                return;
+            this._message = (_a = response.messages[0]) === null || _a === void 0 ? void 0 : _a.text;
+            if (response.messages)
+                this._thread_ts = response.messages[0].thread_ts;
+            if (!this._thread_ts)
+                return;
+            const { messages } = yield this.slackClient.conversations.replies({
+                channel: this._channelId,
+                ts: this._thread_ts,
+            });
+            if (!messages || messages.length === 0) {
+                throw new Error("The message that you are trying to preserve, doesn't have any replies so we can't preserve it.");
+            }
+            this._replies = messages.map((message) => {
+                const isAnswer = message.reactions &&
+                    message.reactions.filter((reaction) => reaction.name === 'white_check_mark').length > 0;
+                if (isAnswer) {
+                    this._hasAnswer = true;
+                }
+                return { body: message.text, isAnswer, ts: message.ts };
+            });
         });
     }
     postMessage(message) {
         this.slackClient.chat.postMessage({
-            channel: this.channel,
+            channel: this._channelId,
             text: message,
             as_user: true,
-            thread_ts: this.thread_ts,
+            thread_ts: this._thread_ts,
             icon_url: 'https://avatars.githubusercontent.com/u/61865014',
         });
     }

@@ -31,12 +31,12 @@ export default class GitHubRepository {
 
     return new GitHubRepository(repository.id, discussionCategories);
   }
-  async createDiscussion(discussion: Discussion) {
+  async createDiscussion(discussion: Discussion): Promise<string> {
     if (!this.discussionCategories) {
       console.error(
         'please make sure to call parseDiscussionCategories() before creating a discussion.'
       );
-      return;
+      return '';
     }
     console.log('creating discussion with title:', discussion.category);
     const { createDiscussion } = await fetchGraphql(
@@ -46,7 +46,7 @@ export default class GitHubRepository {
           input: {
             repositoryId: "${this.repoId}"
             title: "${discussion.title}"
-            body: "${discussion.message}"
+            body: "${discussion._message}"
             categoryId: "${discussion.category}"
           }
         ) {
@@ -59,18 +59,26 @@ export default class GitHubRepository {
     `
     );
     const gitHubDiscussionId = createDiscussion.discussion.id;
-    this.createDicussionComments(gitHubDiscussionId, discussion);
-    return createDiscussion.discussion.url;
+    const commentsCreated = await this.createDicussionComments(
+      gitHubDiscussionId,
+      discussion
+    );
+    if (commentsCreated) {
+      return createDiscussion.discussion.url;
+    }
+    return '';
   }
   private async createDicussionComments(
     gitHubDiscussionId: string,
     discussion: Discussion
-  ) {
-    if (!discussion.replies) return;
-    discussion.replies.map(async (message) => {
-      console.log('adding comment to discussion:', gitHubDiscussionId);
-      const { addDiscussionComment } = await fetchGraphql(
-        `
+  ): Promise<boolean> {
+    if (!discussion._replies) return true;
+    try {
+      discussion._replies.map(async (message) => {
+        console.log('adding comment to discussion:', gitHubDiscussionId);
+
+        const { addDiscussionComment } = await fetchGraphql(
+          `
       mutation {
         addDiscussionComment(
           input: {
@@ -84,17 +92,23 @@ export default class GitHubRepository {
         }
       }
     `
-      );
-      const commentId = addDiscussionComment.comment.id;
-      if (message.isAnswer && commentId) {
-        this.markAnswer(commentId);
-      }
-    });
+        );
+        const commentId = addDiscussionComment.comment.id;
+        if (message.isAnswer && commentId) {
+          this.markAnswer(commentId);
+        }
+      });
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+    return true;
   }
   private markAnswer(commentId: string) {
     console.log('marking the answer.');
-    fetchGraphql(
-      `
+    try {
+      fetchGraphql(
+        `
   mutation {
     markDiscussionCommentAsAnswer(input: {id: "${commentId}" }) {
       discussion {
@@ -103,6 +117,9 @@ export default class GitHubRepository {
     }
   }
   `
-    );
+      );
+    } catch (err) {
+      // do nothing since the type of discussion does not accept answers.
+    }
   }
 }
