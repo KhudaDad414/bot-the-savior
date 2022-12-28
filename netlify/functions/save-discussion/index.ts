@@ -2,6 +2,7 @@ import { Discussion, Event } from './Discussion';
 import GitHubRepository from './GithubReposity';
 import { WebClient } from '@slack/web-api';
 import axios from 'axios';
+import querystring from 'querystring';
 import {
   Handler,
   HandlerResponse,
@@ -19,7 +20,8 @@ const handler: Handler = async (
   context: HandlerContext
 ): Promise<HandlerResponse> => {
   console.log('function callded');
-  console.log(event);
+  console.log(querystring.parse(event.body || ''));
+
   return {
     statusCode: 200,
     body: '{}',
