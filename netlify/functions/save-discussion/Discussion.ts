@@ -1,7 +1,4 @@
 import { WebClient } from '@slack/web-api';
-import axios from 'axios';
-// @ts-ignore
-import splitargs from 'splitargs';
 
 export interface Event {
   channel: string;
