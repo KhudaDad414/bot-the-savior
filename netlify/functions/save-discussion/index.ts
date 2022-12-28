@@ -20,11 +20,10 @@ const handler: Handler = async (
   context: HandlerContext
 ): Promise<HandlerResponse> => {
   console.log('function callded');
-  console.log(querystring.parse(event.body || ''));
 
   return {
     statusCode: 200,
-    body: '{}',
+    body: JSON.stringify(querystring.parse(event.body || '')),
   };
 };
 
